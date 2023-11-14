@@ -1,4 +1,4 @@
-version: '3.4'
+version: '3.1'
 
 services:
 
@@ -10,6 +10,7 @@ services:
       context: ./build/php
       dockerfile: Dockerfile
     container_name: myweb82_php82
+    image: myweb82_php82
     depends_on:
       - myweb82db
     hostname: ${HOSTNAME}
@@ -24,9 +25,9 @@ services:
       MYSQL_DB: docker_db
     restart: always
     networks:
-      -  myweb82_network
+      -  network_myweb82
 
-# MySQL Database 
+# mariadb Database 
   myweb82db:
     env_file:
         - .env
@@ -34,6 +35,7 @@ services:
       context: ./build/mysql
       dockerfile: Dockerfile
     container_name: myweb82_mysql
+    hostname: ${HOSTNAME}
     ports:
       - ${MYSQL_PORT}:3306
     environment:
@@ -42,10 +44,10 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_TEST_DATABASE}
     volumes:
-      - ./data:/var/lib/mysql #mysql data directory | if you docker down or stop or rebuild, mysql data will remain 
+      - ./../data:/var/lib/mysql #mysql data directory | if you docker down or stop or rebuild, mysql data will remain 
     restart: always
     networks:
-      -  myweb82_network
+      -  network_myweb82
 
 # phpMyAdmin for MySQL Database 
   phpmyadmin:
@@ -66,7 +68,8 @@ services:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
       UPLOAD_LIMIT: 64M
     restart: always
-    
+    networks:
+      -  network_myweb82
 
 # Volume 
 volumes:
@@ -74,5 +77,5 @@ volumes:
 
 # Newwork  
 networks:
-  myweb82_network:
+  network_myweb82:
     driver: bridge
