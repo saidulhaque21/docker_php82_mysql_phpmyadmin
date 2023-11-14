@@ -1,81 +1,59 @@
-version: '3.1'
-
+version: "3.1"
 services:
 
-# Web in PHP 
-  myweb82:
-    env_file:
-        - .env
-    build:
-      context: ./build/php
-      dockerfile: Dockerfile
-    container_name: myweb82_php82
-    image: myweb82_php82
-    depends_on:
-      - myweb82db
-    hostname: ${HOSTNAME}
-    ports:
-      - ${HTTP_PORT}:80
+  # PHP 82 Application
+  php82_web:
+    container_name: php82_web
+    build: ./build/php
     volumes:
-      - ${APP_SOURCE_DIRECTORY}:/var/www/html
+      - ./src:/var/www/html
+    ports:
+      - "8200:80"
+    networks:
+      -  network_php82_web
+ 
+
+  # MySQL database for PHP 82
+  mysql_php82_web:
+    # image: mysql:latest
+    container_name: mysql_php82_web
+    build: ./build/mysql
     environment:
-      MYSQL_HOST: ${HOSTNAME}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DB: docker_db
+      MYSQL_ROOT_PASSWORD: RootPass123
+      MYSQL_USER: droot
+      MYSQL_PASSWORD: Pass123
+      MYSQL_DATABASE: php82_test_db
+    ports:
+      - 3308:3306
+    volumes:
+      - ./data:/var/lib/mysql
     restart: always
     networks:
-      -  network_myweb82
+      -  network_php82_web
 
-# mariadb Database 
-  myweb82db:
-    env_file:
-        - .env
-    build:
-      context: ./build/mysql
-      dockerfile: Dockerfile
-    container_name: myweb82_mysql
-    hostname: ${HOSTNAME}
-    ports:
-      - ${MYSQL_PORT}:3306
-    environment:
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_DATABASE: ${MYSQL_TEST_DATABASE}
-    volumes:
-      - ./../data:/var/lib/mysql #mysql data directory | if you docker down or stop or rebuild, mysql data will remain 
-    restart: always
-    networks:
-      -  network_myweb82
-
-# phpMyAdmin for MySQL Database 
+# phpmyadmin for PHP 82
   phpmyadmin:
-    env_file:
-        - .env
     image: phpmyadmin/phpmyadmin
-    container_name: myweb82_phpmyadmin
+    container_name: php82_web_phpmyadmin
     depends_on:
-      - myweb82db
+      - mysql_php82_web
     ports:
-      - ${PHPMYADMIN_PORT}:80
+      - "8201:80"
     environment:
       PMA_ARBITRARY: 1
-      PMA_HOST: ${HOSTNAME}
+      PMA_HOST: mysql_php82_web
       PMA_PORT: 3306
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_USER: droot
+      MYSQL_PASSWORD: Pass123
+      MYSQL_ROOT_PASSWORD: RootPass123
       UPLOAD_LIMIT: 64M
     restart: always
     networks:
-      -  network_myweb82
-
-# Volume 
+      -  network_php82_web
 volumes:
-  data:
+  cakedb_data:
 
 # Newwork  
 networks:
-  network_myweb82:
+  network_php82_web:
     driver: bridge
